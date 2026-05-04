@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Chip & Maggie: Kibble Quest | Reh Dogg Games Plus</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    overflow: hidden;
+    touch-action: none;
+    background: #102413;
+    color: #fff7d6;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+  }
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(255,232,118,.16), transparent 28%),
+      linear-gradient(180deg, #173b1b, #071409 72%);
+  }
+  #gameShell {
+    position: relative;
+    width: min(100vw, 520px);
+    height: min(100vh, 920px);
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    background: #0b1c0f;
+    border: 2px solid rgba(255,213,78,.55);
+    box-shadow: 0 20px 70px rgba(0,0,0,.65);
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    background: #163b1c;
+  }
+  #hud {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 8px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    pointer-events: none;
+  }
+  .stat {
+    min-height: 42px;
+    padding: 5px 4px;
+    border: 2px solid rgba(255,241,99,.9);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(55, 166, 27, .94), rgba(8, 43, 13, .94));
+    text-align: center;
+    box-shadow: 0 0 16px rgba(255, 216, 79, .22), inset 0 0 14px rgba(101,255,120,.18);
+  }
+  .stat span {
+    display: block;
+    color: #ffe36a;
+    font-size: .62rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .stat strong {
+    display: block;
+    color: #ffffff;
+    font-size: 1.05rem;
+    line-height: 1.05;
+    text-shadow: 0 2px 0 #000, 0 0 10px rgba(255,241,99,.5);
+  }
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    background:
+      linear-gradient(rgba(2,8,3,.88), rgba(2,8,3,.94)),
+      radial-gradient(circle at 50% 18%, rgba(255,216,76,.2), transparent 35%),
+      repeating-linear-gradient(45deg, rgba(104,174,60,.14) 0 8px, rgba(44,96,35,.14) 8px 16px);
+  }
+  .screen.active {
+    display: flex;
+  }
+  #introScreen {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 20px;
+    background:
+      radial-gradient(circle at center, rgba(24, 78, 27, .26), transparent 45%),
+      #020502;
+  }
+  #introScreen.hidden {
+    display: none;
+  }
+  #introVideo {
+    display: block;
+    width: min(96vw, calc((100vh - 108px) * 16 / 9), 1180px);
+    width: min(96vw, calc((100dvh - 108px) * 16 / 9), 1180px);
+    height: auto;
+    max-height: calc(100vh - 108px);
+    max-height: calc(100dvh - 108px);
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: #020502;
+    border: 3px solid rgba(255,216,79,.72);
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0,0,0,.8), 0 0 30px rgba(125,255,89,.16);
+  }
+  #skipIntroBtn {
+    position: static;
+    z-index: 21;
+    width: auto;
+    min-width: 170px;
+    min-height: 48px;
+    margin: 0;
+    padding: 0 22px;
+  }
+  #playIntroBtn {
+    position: static;
+    z-index: 21;
+    width: auto;
+    min-width: 230px;
+    min-height: 54px;
+    margin: 0;
+    padding: 0 24px;
+    border: 3px solid #fff7a9;
+    box-shadow: 0 7px 0 #7b4500, 0 0 26px rgba(255,216,79,.5);
+  }
+  .introButtons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .panel {
+    position: relative;
+    width: min(100%, 900px);
+    max-height: min(92vh, 760px);
+    overflow: auto;
+    padding: clamp(18px, 3vw, 30px);
+    border: 4px solid #ffd84f;
+    border-radius: 18px;
+    background:
+      linear-gradient(rgba(6,24,8,.72), rgba(6,24,8,.9)),
+      radial-gradient(circle at top, rgba(255,226,70,.2), transparent 38%),
+      rgba(9, 29, 12, .94);
+    box-shadow:
+      0 22px 70px rgba(0,0,0,.76),
+      inset 0 0 34px rgba(99,255,92,.18),
+      0 0 28px rgba(255,216,79,.24);
+  }
+  #titleScreen {
+    background:
+      linear-gradient(rgba(1, 9, 3, .56), rgba(1, 9, 3, .9)),
+      url("chipandmaggie-cover.jpg") center / cover no-repeat,
+      #061507;
+  }
+  #titleScreen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(3px);
+    background:
+      radial-gradient(circle at center, rgba(255,225,60,.18), transparent 45%),
+      rgba(0,0,0,.36);
+    pointer-events: none;
+  }
+  #titleScreen .panel {
+    background:
+      linear-gradient(180deg, rgba(9,36,13,.9), rgba(3,12,4,.94)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 10px);
+  }
+  .brand {
+    color: #98ff63;
+    font-size: clamp(.78rem, 1.6vw, 1rem);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(152,255,99,.7);
+  }
+  h1, h2 {
+    margin: 8px 0 10px;
+    color: #ffd84f;
+    line-height: .9;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    text-shadow:
+      0 5px 0 #7c2c00,
+      0 0 18px rgba(255,216,79,.5),
+      0 0 30px rgba(0,210,255,.2);
+  }
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 5.8rem);
+  }
+  h2 {
+    font-size: clamp(1.8rem, 7vw, 2.7rem);
+  }
+  .copy {
+    margin: 10px 0 16px;
+    color: #daf7cd;
+    font-size: clamp(.88rem, 1.5vw, 1.04rem);
+    line-height: 1.4;
+  }
+  .arcadeIcons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 14px;
+  }
+  .arcadeIcons span {
+    min-width: 74px;
+    padding: 6px 9px;
+    border: 2px solid rgba(255,216,79,.62);
+    border-radius: 999px;
+    background: rgba(0,0,0,.38);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 900;
+    box-shadow: inset 0 0 10px rgba(106,255,74,.18);
+  }
+  .characterRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .choice {
+    border: 3px solid rgba(255,216,79,.42);
+    border-radius: 14px;
+    padding: 14px 12px;
+    background:
+      linear-gradient(180deg, rgba(42,98,24,.76), rgba(7,28,9,.84));
+    box-shadow: inset 0 0 18px rgba(0,0,0,.28);
+  }
+  .choice strong {
+    display: block;
+    color: #fff;
+    font-size: 1.35rem;
+    text-shadow: 0 3px 0 #102000, 0 0 14px rgba(255,216,79,.35);
+  }
+  .choice.selected {
+    border-color: #ffffff;
+    box-shadow: 0 0 22px rgba(255,216,79,.72), inset 0 0 20px rgba(255,216,79,.18);
+  }
+  button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff27c, #ffa51e 58%, #ef5d1f);
+    color: #201400;
+    font-weight: 1000;
+    font-size: .95rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #7b4500, 0 0 18px rgba(255,216,79,.2);
+  }
+  #startBtn {
+    min-height: 62px;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    border: 3px solid #fff7a9;
+    box-shadow: 0 7px 0 #7b4500, 0 0 24px rgba(255,216,79,.45);
+  }
+  #controlsBtn {
+    width: min(100%, 260px);
+    min-height: 42px;
+    font-size: .82rem;
+    background: linear-gradient(180deg, #91ff72, #25b247);
+    box-shadow: 0 4px 0 #0a4e1c;
+  }
+  button:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #7b4500;
+  }
+  #pauseBtn {
+    position: fixed;
+    right: max(16px, calc((100vw - 520px) / 2 + 16px));
+    bottom: 18px;
+    z-index: 8;
+    width: auto;
+    min-width: 86px;
+    min-height: 44px;
+    padding: 0 16px;
+    margin: 0;
+    font-size: .72rem;
+    box-shadow: 0 3px 0 #7b4500;
+  }
+  #gameShell::after {
+    content: "";
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 4;
+    width: min(100vw, 520px);
+    height: 178px;
+    pointer-events: none;
+    background: linear-gradient(0deg, rgba(3, 13, 5, .76), rgba(3, 13, 5, .38) 62%, transparent);
+  }
+  #touchControls {
+    position: fixed;
+    left: max(14px, calc((100vw - 520px) / 2 + 14px));
+    bottom: 14px;
+    z-index: 6;
+    width: 132px;
+    height: 132px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 7px;
+    opacity: .62;
+  }
+  .touchBtn {
+    min-height: 0;
+    margin: 0;
+    border: 2px solid rgba(255,255,255,.45);
+    border-radius: 10px;
+    background: rgba(13, 34, 20, .8);
+    color: #fff;
+    box-shadow: 0 4px 0 rgba(0,0,0,.35);
+    font-size: 1.05rem;
+  }
+  .touchBtn[data-dir="up"] { grid-column: 2; grid-row: 1; }
+  .touchBtn[data-dir="left"] { grid-column: 1; grid-row: 2; }
+  .touchBtn[data-dir="right"] { grid-column: 3; grid-row: 2; }
+  .touchBtn[data-dir="down"] { grid-column: 2; grid-row: 3; }
+  #popups {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    pointer-events: none;
+  }
+  .popup {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    color: #ffe85d;
+    font-weight: 1000;
+    font-size: clamp(1.25rem, 6vw, 3rem);
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 0 3px 0 #7c2400, 0 0 12px rgba(255,255,255,.4);
+    animation: floatUp .75s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; translate: 0 0; scale: 1; }
+    to { opacity: 0; translate: 0 -42px; scale: 1.22; }
+  }
+  @media (min-width: 760px) {
+    #touchControls { opacity: .34; width: 118px; height: 118px; }
+    #pauseBtn { opacity: .92; }
+  }
+  @media (max-height: 740px) {
+    #touchControls { width: 116px; height: 116px; bottom: 10px; }
+    #pauseBtn { bottom: 12px; min-height: 40px; }
+    #gameShell::after { height: 146px; }
+  }
+  @media (max-width: 680px) {
+    .screen { padding: 14px; }
+    .panel { max-height: 92vh; border-width: 3px; }
+    .characterRow { grid-template-columns: 1fr; gap: 10px; }
+    .choice { padding: 10px; }
+    .choice .copy { margin: 6px 0 8px; }
+    .arcadeIcons span { min-width: 62px; font-size: .7rem; padding: 5px 7px; }
+    #introScreen { padding: 12px; gap: 12px; }
+    #introVideo { width: 100%; max-height: calc(100vh - 88px); border-radius: 8px; }
+    #skipIntroBtn { min-height: 44px; }
+    .introButtons { width: 100%; }
+    #playIntroBtn, #skipIntroBtn { width: min(100%, 280px); }
+  }
+</style>
+</head>
+<body>
+<main id="gameShell">
+  <div id="introScreen">
+    <video id="introVideo" playsinline webkit-playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" x-webkit-airplay="deny">
+      <source src="intro.mp4" type="video/mp4">
+    </video>
+    <div class="introButtons">
+      <button id="playIntroBtn">Play Intro With Sound</button>
+      <button id="skipIntroBtn">Skip Intro</button>
+    </div>
+  </div>
+  <canvas id="gameCanvas" width="540" height="960"></canvas>
+  <div id="hud">
+    <div class="stat"><span>Score</span><strong id="scoreText">0</strong></div>
+    <div class="stat"><span>Lives</span><strong id="livesText">3</strong></div>
+    <div class="stat"><span>Level</span><strong id="levelText">1</strong></div>
+    <div class="stat"><span>Mode</span><strong id="modeText">Ready</strong></div>
+  </div>
+  <button id="pauseBtn">Pause</button>
+  <div id="touchControls">
+    <button class="touchBtn" data-dir="up">▲</button>
+    <button class="touchBtn" data-dir="left">◀</button>
+    <button class="touchBtn" data-dir="right">▶</button>
+    <button class="touchBtn" data-dir="down">▼</button>
+  </div>
+  <div id="popups"></div>
+
+  <section id="titleScreen" class="screen active">
+    <div class="panel">
+      <div class="brand">Reh Dogg Games Plus Presents</div>
+      <h1>Chip & Maggie:<br>Kibble Quest</h1>
+      <div class="arcadeIcons" aria-hidden="true">
+        <span>Kibble</span>
+        <span>Treat</span>
+        <span>Ticks</span>
+        <span>Fleas</span>
+        <span>Paws</span>
+      </div>
+      <p class="copy">Race through garden paths, gobble kibble, grab dog treats, and chase bonus critters while ticks, fleas, and parasites hunt through the grass.</p>
+      <div class="characterRow">
+        <div class="choice selected" id="chipChoice">
+          <strong>Chip</strong>
+          <p class="copy">Chocolate Labrador<br>Slower, tougher</p>
+          <button id="chipBtn">Play as Chip</button>
+        </div>
+        <div class="choice" id="maggieChoice">
+          <strong>Maggie</strong>
+          <p class="copy">Black Labrador<br>Faster, lighter</p>
+          <button id="maggieBtn">Play as Maggie</button>
+        </div>
+      </div>
+      <button id="startBtn">Start Game</button>
+      <button id="controlsBtn">Controls</button>
+    </div>
+  </section>
+
+  <section id="controlsScreen" class="screen">
+    <div class="panel">
+      <div class="brand">Controls</div>
+      <h2>How To Play</h2>
+      <p class="copy">Use arrow keys, WASD, or the touch pad. Eat every kibble piece. Treats make enemies scared. Catch chipmunks and rabbits for bonus points.</p>
+      <button id="backBtn">Back</button>
+    </div>
+  </section>
+
+  <section id="endScreen" class="screen">
+    <div class="panel">
+      <div class="brand">Reh Dogg Games Plus</div>
+      <h2 id="endTitle">Game Over</h2>
+      <p class="copy" id="endCopy">Final score: 0</p>
+      <button id="againBtn">Play Again</button>
+      <button id="menuBtn">Return To Menu</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const H = canvas.height;
+  const hud = {
+    score: document.getElementById("scoreText"),
+    lives: document.getElementById("livesText"),
+    level: document.getElementById("levelText"),
+    mode: document.getElementById("modeText")
+  };
+  const screens = {
+    title: document.getElementById("titleScreen"),
+    controls: document.getElementById("controlsScreen"),
+    end: document.getElementById("endScreen")
+  };
+  const introScreen = document.getElementById("introScreen");
+  const introVideo = document.getElementById("introVideo");
+  const playIntroBtn = document.getElementById("playIntroBtn");
+  const skipIntroBtn = document.getElementById("skipIntroBtn");
+  const popups = document.getElementById("popups");
+
+  const TILE = 27;
+  const ROWS = 25;
+  const COLS = 20;
+  const TOP = 86;
+  const TILE_WALL = 0;
+  const TILE_PATH = 1;
+  const TILE_KIBBLE = 2;
+  const TILE_TREAT = 3;
+  const TILE_HOUSE = 4;
+  const TILE_DOOR = 5;
+  const TUNNEL_ROWS = new Set([7, 17]);
+  let debugMaze = false;
+  const tileMap = [
+    "00000000000000000000",
+    "03222222222222222230",
+    "02000020000200000020",
+    "02222222222222222220",
+    "02020002000020020200",
+    "02220222222222022220",
+    "00020200022000202000",
+    "22222222222222222222",
+    "02020022222220020200",
+    "02222220055002222220",
+    "02000000444400000020",
+    "02222220444402222220",
+    "00002000444400020000",
+    "02222220000002222220",
+    "02020020000020020200",
+    "02222222222222222220",
+    "02020020000020020200",
+    "22222222222222222222",
+    "00020200022000202000",
+    "02220222222222022220",
+    "02020002000020020200",
+    "02222222222222222220",
+    "02000020000200000020",
+    "03222222222222222230",
+    "00000000000000000000"
+  ].map(row => row.split("").map(Number));
+
+  const DIRS = {
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 }
+  };
+
+  const audioFiles = {
+    menu: ["theme_song.mp3", true, .32],
+    chomp: ["kibble_chomp.wav", false, .62],
+    powerup: ["powerup.wav", false, .82],
+    powerLoop: ["power_mode_loop.mp3", true, .28],
+    chase: ["enemy_chase.wav", true, .18],
+    enemyEaten: ["enemy_eaten.wav", false, .82],
+    bonus: ["bonus.wav", false, .82],
+    hit: ["hit.wav", false, .8],
+    gameOver: ["game_over_stinger.wav", false, .86]
+  };
+  const sounds = {};
+  Object.entries(audioFiles).forEach(([key, spec]) => {
+    const [src, loop, volume] = spec;
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.loop = loop;
+    audio.volume = volume;
+    audio.addEventListener("error", () => {}, { once: true });
+    sounds[key] = audio;
+  });
+  let audioReady = false;
+  const audioState = {
+    lastChomp: 0,
+    lastHit: 0,
+    lastBonus: 0
+  };
+
+  function unlockAudio() {
+    audioReady = true;
+    if (state.introActive) return;
+    if (state.running && !state.paused) return;
+    if (state.screen === "title" || state.screen === "controls") playLoop("menu");
+  }
+
+  function playSound(name, throttle = 0) {
+    if (!audioReady) return;
+    const base = sounds[name];
+    if (!base) return;
+    const now = performance.now();
+    const mark = `last_${name}`;
+    if (throttle && audioState[mark] && now - audioState[mark] < throttle) return;
+    audioState[mark] = now;
+    try {
+      const s = base.cloneNode(true);
+      s.volume = base.volume;
+      s.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  function playLoop(name) {
+    if (!audioReady) return;
+    const s = sounds[name];
+    if (!s || !s.paused) return;
+    try { s.play().catch(() => {}); } catch (e) {}
+  }
+
+  function stopLoop(name) {
+    const s = sounds[name];
+    if (!s) return;
+    try {
+      s.pause();
+      s.currentTime = 0;
+    } catch (e) {}
+  }
+
+  function stopGameplayLoops() {
+    stopLoop("powerLoop");
+    stopLoop("chase");
+  }
+
+  function setMenuMusic(active) {
+    if (active) playLoop("menu");
+    else stopLoop("menu");
+  }
+
+  const state = {
+    selected: "chip",
+    screen: "title",
+    introActive: true,
+    running: false,
+    paused: false,
+    score: 0,
+    lives: 3,
+    level: 1,
+    pellets: new Set(),
+    treats: new Set(),
+    scaredTimer: 0,
+    flashTimer: 0,
+    lastTime: 0,
+    bonusTimer: 4,
+    mode: "Ready"
+  };
+
+  const player = {
+    x: 1,
+    y: 1,
+    px: 0,
+    py: 0,
+    dir: DIRS.right,
+    next: DIRS.right,
+    speed: 5.9,
+    durability: 3,
+    mouth: 0
+  };
+
+  const enemies = [];
+  const bonuses = [];
+  const keys = new Set();
+  let lastPathLog = 0;
+
+  function tileCenterX(x) { return x * TILE + TILE / 2; }
+  function tileCenterY(y) { return TOP + y * TILE + TILE / 2; }
+  function isTunnelRow(y) { return TUNNEL_ROWS.has(y); }
+  function wrapX(x) {
+    if (x < 0) return COLS - 1;
+    if (x >= COLS) return 0;
+    return x;
+  }
+  function tileAt(x, y) {
+    if (isTunnelRow(y) && (x < 0 || x >= COLS)) return TILE_PATH;
+    if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return TILE_WALL;
+    return tileMap[y][x];
+  }
+  function isWall(x, y) {
+    return tileAt(x, y) === TILE_WALL;
+  }
+  function isWalkable(x, y) {
+    const tile = tileAt(x, y);
+    if (tile === TILE_WALL) return false;
+    return true;
+  }
+  function validNeighbor(x, y, dir) {
+    const ny = y + dir.y;
+    let nx = x + dir.x;
+    if (isTunnelRow(y) && dir.x !== 0) nx = wrapX(nx);
+    if (!isWalkable(nx, ny)) return null;
+    return { x: nx, y: ny };
+  }
+  function validDirsAt(x, y, allowReverse = true, currentDir = null) {
+    const reverse = currentDir ? { x: -currentDir.x, y: -currentDir.y } : null;
+    return Object.values(DIRS).filter(dir => {
+      if (!allowReverse && reverse && dir.x === reverse.x && dir.y === reverse.y) return false;
+      return !!validNeighbor(x, y, dir);
+    });
+  }
+  function key(x, y) { return `${x},${y}`; }
+  function parseKey(k) {
+    const [x, y] = k.split(",").map(Number);
+    return { x, y };
+  }
+
+  function showScreen(name) {
+    Object.values(screens).forEach(s => s.classList.remove("active"));
+    if (name && screens[name]) screens[name].classList.add("active");
+    state.screen = name;
+    if (!state.introActive && (name === "title" || name === "controls")) setMenuMusic(true);
+  }
+
+  function finishIntro() {
+    if (!state.introActive) return;
+    state.introActive = false;
+    try {
+      introVideo.pause();
+      introVideo.currentTime = 0;
+    } catch (e) {}
+    introScreen.classList.add("hidden");
+    showScreen("title");
+    if (audioReady) setMenuMusic(true);
+  }
+
+  function skipIntro() {
+    unlockAudio();
+    finishIntro();
+  }
+
+  function playIntroWithSound() {
+    audioReady = true;
+    stopLoop("menu");
+    try {
+      introVideo.disablePictureInPicture = true;
+      introVideo.controls = false;
+      introVideo.muted = false;
+      introVideo.volume = 1;
+      introVideo.currentTime = 0;
+      introVideo.play().catch(() => {});
+      playIntroBtn.style.display = "none";
+    } catch (e) {
+      finishIntro();
+    }
+  }
+
+  function chooseDog(name) {
+    state.selected = name;
+    document.getElementById("chipChoice").classList.toggle("selected", name === "chip");
+    document.getElementById("maggieChoice").classList.toggle("selected", name === "maggie");
+  }
+
+  function setupLevel() {
+    state.pellets.clear();
+    state.treats.clear();
+    bonuses.length = 0;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const tile = tileAt(x, y);
+        if (tile === TILE_TREAT) state.treats.add(key(x, y));
+        if (tile === TILE_KIBBLE) state.pellets.add(key(x, y));
+      }
+    }
+    const chip = state.selected === "chip";
+    player.x = 1;
+    player.y = 1;
+    player.px = tileCenterX(player.x);
+    player.py = tileCenterY(player.y);
+    player.dir = DIRS.right;
+    player.next = DIRS.right;
+    player.tx = null;
+    player.ty = null;
+    player.speed = chip ? 5.35 : 6.25;
+    player.durability = chip ? 4 : 3;
+    enemies.length = 0;
+    [
+      ["Tick", 9, 10, "#8b2d15"],
+      ["Flea", 10, 10, "#a01b62"],
+      ["Parasite", 9, 11, "#5d42d6"],
+      ["Tick", 10, 11, "#d85127"]
+    ].slice(0, Math.min(2 + state.level, 4)).forEach((e, i) => {
+      enemies.push({
+        name: e[0],
+        x: e[1],
+        y: e[2],
+        px: tileCenterX(e[1]),
+        py: tileCenterY(e[2]),
+        dir: [DIRS.left, DIRS.right, DIRS.up, DIRS.down][i],
+        tx: null,
+        ty: null,
+        speed: 3.65 + state.level * .18,
+        color: e[3],
+        eaten: false,
+        wait: .8 + i * .9,
+        spawnX: e[1],
+        spawnY: e[2],
+        doorX: i % 2 ? 10 : 9,
+        doorY: 9,
+        houseTimer: 0,
+        stuckTimer: 0
+      });
+    });
+    state.scaredTimer = 0;
+    state.bonusTimer = 5;
+    state.mode = "Quest";
+  }
+
+  function startGame() {
+    unlockAudio();
+    setMenuMusic(false);
+    stopGameplayLoops();
+    state.running = true;
+    state.paused = false;
+    state.score = 0;
+    state.lives = 3;
+    state.level = 1;
+    setupLevel();
+    showScreen(null);
+  }
+
+  function nextLevel() {
+    state.level += 1;
+    stopGameplayLoops();
+    setupLevel();
+    popup(W / 2, H / 2, `LEVEL ${state.level}`);
+  }
+
+  function endGame(victory) {
+    state.running = false;
+    stopGameplayLoops();
+    setMenuMusic(false);
+    if (!victory) playSound("gameOver");
+    document.getElementById("endTitle").textContent = victory ? "Victory!" : "Game Over";
+    document.getElementById("endCopy").textContent = `Final score: ${state.score}`;
+    showScreen("end");
+  }
+
+  function loseLife() {
+    playSound("hit", 450);
+    state.lives -= 1;
+    if (state.lives <= 0) {
+      endGame(false);
+      return;
+    }
+    player.x = 1;
+    player.y = 1;
+    player.px = tileCenterX(player.x);
+    player.py = tileCenterY(player.y);
+    player.dir = DIRS.right;
+    player.next = DIRS.right;
+    player.tx = null;
+    player.ty = null;
+    enemies.forEach((e, i) => {
+      e.x = e.spawnX;
+      e.y = e.spawnY;
+      e.px = tileCenterX(e.x);
+      e.py = tileCenterY(e.y);
+      e.dir = DIRS.up;
+      e.tx = null;
+      e.ty = null;
+      e.wait = .8 + i * .45;
+      e.houseTimer = 0;
+      e.stuckTimer = 0;
+    });
+  }
+
+  function popup(x, y, text) {
+    const div = document.createElement("div");
+    div.className = "popup";
+    div.textContent = text;
+    div.style.left = `${x / W * 100}%`;
+    div.style.top = `${y / H * 100}%`;
+    popups.appendChild(div);
+    setTimeout(() => div.remove(), 760);
+  }
+
+  function applyInput() {
+    if (keys.has("ArrowLeft") || keys.has("KeyA")) player.next = DIRS.left;
+    if (keys.has("ArrowRight") || keys.has("KeyD")) player.next = DIRS.right;
+    if (keys.has("ArrowUp") || keys.has("KeyW")) player.next = DIRS.up;
+    if (keys.has("ArrowDown") || keys.has("KeyS")) player.next = DIRS.down;
+  }
+
+  function nearCenter(obj) {
+    return Math.abs(obj.px - tileCenterX(obj.x)) < 2 && Math.abs(obj.py - tileCenterY(obj.y)) < 2;
+  }
+
+  function moveEntity(obj, dt, speed) {
+    if (obj.tx == null || obj.ty == null || nearCenter(obj)) {
+      obj.x = wrapX(obj.x);
+      obj.px = tileCenterX(obj.x);
+      obj.py = tileCenterY(obj.y);
+      if (obj === player && validNeighbor(obj.x, obj.y, player.next)) obj.dir = player.next;
+      const target = validNeighbor(obj.x, obj.y, obj.dir);
+      if (!target) {
+        obj.tx = null;
+        obj.ty = null;
+        return false;
+      }
+      obj.tx = target.x;
+      obj.ty = target.y;
+      if (isTunnelRow(obj.y) && obj.dir.x < 0 && obj.x === 0) obj.tx = -1;
+      if (isTunnelRow(obj.y) && obj.dir.x > 0 && obj.x === COLS - 1) obj.tx = COLS;
+    }
+    const dist = speed * TILE * dt;
+    const targetPx = tileCenterX(obj.tx);
+    const targetPy = tileCenterY(obj.ty);
+    obj.px += obj.dir.x * dist;
+    obj.py += obj.dir.y * dist;
+    const reachedX = obj.dir.x === 0 || (obj.dir.x > 0 ? obj.px >= targetPx : obj.px <= targetPx);
+    const reachedY = obj.dir.y === 0 || (obj.dir.y > 0 ? obj.py >= targetPy : obj.py <= targetPy);
+    if (reachedX && reachedY) {
+      obj.x = wrapX(obj.tx);
+      obj.y = obj.ty;
+      obj.px = tileCenterX(obj.x);
+      obj.py = tileCenterY(obj.y);
+      obj.tx = null;
+      obj.ty = null;
+    } else {
+      obj.x = wrapX(Math.round((obj.px - TILE / 2) / TILE));
+      obj.y = Math.round((obj.py - TOP - TILE / 2) / TILE);
+    }
+    return true;
+  }
+
+  function gridDistance(sx, sy, tx, ty) {
+    sx = wrapX(sx);
+    tx = wrapX(tx);
+    if (!isWalkable(sx, sy) || !isWalkable(tx, ty)) return Infinity;
+    const q = [{ x: sx, y: sy, d: 0 }];
+    const seen = new Set([key(sx, sy)]);
+    for (let i = 0; i < q.length; i++) {
+      const n = q[i];
+      if (n.x === tx && n.y === ty) return n.d;
+      Object.values(DIRS).forEach(dir => {
+        const next = validNeighbor(n.x, n.y, dir);
+        if (!next) return;
+        const k = key(next.x, next.y);
+        if (seen.has(k)) return;
+        seen.add(k);
+        q.push({ x: next.x, y: next.y, d: n.d + 1 });
+      });
+    }
+    return Infinity;
+  }
+
+  function shortestPathDirection(sx, sy, tx, ty) {
+    sx = wrapX(sx);
+    tx = wrapX(tx);
+    if (!isWalkable(sx, sy) || !isWalkable(tx, ty)) return null;
+    const q = [{ x: sx, y: sy, first: null }];
+    const seen = new Set([key(sx, sy)]);
+    for (let i = 0; i < q.length; i++) {
+      const n = q[i];
+      if (n.x === tx && n.y === ty) return n.first;
+      Object.values(DIRS).forEach(dir => {
+        const next = validNeighbor(n.x, n.y, dir);
+        if (!next) return;
+        const k = key(next.x, next.y);
+        if (seen.has(k)) return;
+        seen.add(k);
+        q.push({ x: next.x, y: next.y, first: n.first || dir });
+      });
+    }
+    return null;
+  }
+
+  function logPathFailure(enemy, reason) {
+    const now = performance.now();
+    if (now - lastPathLog < 1200) return;
+    lastPathLog = now;
+    console.warn("Kibble Quest enemy path issue:", reason, {
+      enemy: enemy.name,
+      enemyTile: `${enemy.x},${enemy.y}`,
+      playerTile: `${player.x},${player.y}`,
+      tile: tileAt(enemy.x, enemy.y)
+    });
+  }
+
+  function chooseEnemyDir(enemy) {
+    const dirs = validDirsAt(enemy.x, enemy.y, true);
+    if (!dirs.length) return enemy.dir;
+    if (tileAt(enemy.x, enemy.y) === TILE_HOUSE) {
+      const exitDir = shortestPathDirection(enemy.x, enemy.y, enemy.doorX, enemy.doorY);
+      if (exitDir) return exitDir;
+      logPathFailure(enemy, "No house-to-door path");
+    }
+    if (tileAt(enemy.x, enemy.y) === TILE_DOOR) return DIRS.up;
+
+    if (state.scaredTimer <= 0) {
+      const chaseDir = shortestPathDirection(enemy.x, enemy.y, player.x, player.y);
+      if (chaseDir) return chaseDir;
+      logPathFailure(enemy, "No path to player");
+    }
+
+    let best = dirs[0];
+    let bestScore = state.scaredTimer > 0 ? -Infinity : Infinity;
+    dirs.forEach(d => {
+      const next = validNeighbor(enemy.x, enemy.y, d);
+      if (!next) return;
+      const score = gridDistance(next.x, next.y, player.x, player.y);
+      if (state.scaredTimer > 0 ? score > bestScore : score < bestScore) {
+        bestScore = score;
+        best = d;
+      }
+    });
+    return best;
+  }
+
+  function sendEnemyToDoor(enemy) {
+    enemy.x = enemy.doorX;
+    enemy.y = enemy.doorY;
+    enemy.px = tileCenterX(enemy.x);
+    enemy.py = tileCenterY(enemy.y);
+    enemy.dir = DIRS.up;
+    enemy.tx = null;
+    enemy.ty = null;
+    enemy.wait = 0;
+    enemy.houseTimer = 0;
+    enemy.stuckTimer = 0;
+  }
+
+  function sendEnemyOutsideDoor(enemy) {
+    enemy.x = enemy.doorX;
+    enemy.y = enemy.doorY - 1;
+    enemy.px = tileCenterX(enemy.x);
+    enemy.py = tileCenterY(enemy.y);
+    enemy.dir = chooseEnemyDir(enemy);
+    enemy.tx = null;
+    enemy.ty = null;
+    enemy.wait = 0;
+    enemy.houseTimer = 0;
+    enemy.stuckTimer = 0;
+  }
+
+  function updateEnemies(dt) {
+    enemies.forEach(enemy => {
+      if (enemy.wait > 0) {
+        enemy.wait -= dt;
+        enemy.houseTimer += dt;
+        if (enemy.wait <= 0) {
+          sendEnemyToDoor(enemy);
+        } else if (enemy.houseTimer > 5) {
+          sendEnemyOutsideDoor(enemy);
+        }
+        return;
+      }
+      if (tileAt(enemy.x, enemy.y) === TILE_HOUSE || tileAt(enemy.x, enemy.y) === TILE_DOOR) {
+        enemy.houseTimer += dt;
+        if (enemy.houseTimer > 5) sendEnemyOutsideDoor(enemy);
+      } else {
+        enemy.houseTimer = 0;
+      }
+      if (nearCenter(enemy)) enemy.dir = chooseEnemyDir(enemy);
+      const moved = moveEntity(enemy, dt, enemy.speed * (state.scaredTimer > 0 ? .72 : 1));
+      enemy.stuckTimer = moved ? 0 : enemy.stuckTimer + dt;
+      if (enemy.stuckTimer > 1) {
+        sendEnemyToDoor(enemy);
+      } else if (enemy.stuckTimer > .28) {
+        enemy.dir = chooseEnemyDir(enemy);
+      }
+      const d = Math.hypot(enemy.px - player.px, enemy.py - player.py);
+      if (d < TILE * .65) {
+        if (state.scaredTimer > 0) {
+          state.score += 300;
+          playSound("enemyEaten", 120);
+          popup(enemy.px, enemy.py, "+300");
+          enemy.x = enemy.spawnX;
+          enemy.y = enemy.spawnY;
+          enemy.px = tileCenterX(enemy.x);
+          enemy.py = tileCenterY(enemy.y);
+          enemy.tx = null;
+          enemy.ty = null;
+          enemy.wait = 1.8;
+          enemy.houseTimer = 0;
+          enemy.stuckTimer = 0;
+        } else {
+          loseLife();
+        }
+      }
+    });
+  }
+
+  function spawnBonus(dt) {
+    state.bonusTimer -= dt;
+    if (state.bonusTimer > 0 || bonuses.length) return;
+    const spots = [...state.pellets].map(parseKey).filter(p => isWalkable(p.x, p.y, "player"));
+    if (!spots.length) return;
+    const pos = spots[Math.floor(Math.random() * spots.length)];
+    bonuses.push({
+      type: Math.random() > .5 ? "Chipmunk" : "Rabbit",
+      x: pos.x,
+      y: pos.y,
+      px: tileCenterX(pos.x),
+      py: tileCenterY(pos.y),
+      dir: Object.values(DIRS)[Math.floor(Math.random() * 4)],
+      life: 7
+    });
+    state.bonusTimer = 14 + Math.random() * 8;
+  }
+
+  function updateBonuses(dt) {
+    for (let i = bonuses.length - 1; i >= 0; i--) {
+      const b = bonuses[i];
+      b.life -= dt;
+      if (nearCenter(b)) {
+        const dirs = validDirsAt(b.x, b.y, true);
+        if (dirs.length) b.dir = dirs[Math.floor(Math.random() * dirs.length)];
+      }
+      moveEntity(b, dt, b.type === "Rabbit" ? 4.8 : 4.1);
+      if (Math.hypot(b.px - player.px, b.py - player.py) < TILE * .7) {
+        const pts = b.type === "Rabbit" ? 750 : 500;
+        state.score += pts;
+        playSound("bonus", 120);
+        popup(b.px, b.py, `BONUS! +${pts}`);
+        bonuses.splice(i, 1);
+      } else if (b.life <= 0) {
+        bonuses.splice(i, 1);
+      }
+    }
+  }
+
+  function updatePlayer(dt) {
+    applyInput();
+    moveEntity(player, dt, player.speed);
+    player.mouth += dt * 12;
+    const here = key(player.x, player.y);
+    if (state.pellets.has(here)) {
+      state.pellets.delete(here);
+      state.score += 10;
+      playSound("chomp", 70);
+    }
+    if (state.treats.has(here)) {
+      state.treats.delete(here);
+      state.score += 60;
+      state.scaredTimer = 8;
+      state.flashTimer = .24;
+      playSound("powerup");
+      playLoop("powerLoop");
+      stopLoop("chase");
+      popup(W / 2, H / 2, "TREAT POWER!");
+    }
+    if (!state.pellets.size && !state.treats.size) {
+      if (state.level >= 3) endGame(true);
+      else nextLevel();
+    }
+  }
+
+  function update(dt) {
+    if (!state.running || state.paused) return;
+    const wasPowered = state.scaredTimer > 0;
+    state.scaredTimer = Math.max(0, state.scaredTimer - dt);
+    state.flashTimer = Math.max(0, state.flashTimer - dt);
+    if (wasPowered && state.scaredTimer <= 0) stopLoop("powerLoop");
+    state.mode = state.scaredTimer > 0 ? "Treat" : "Quest";
+    updatePlayer(dt);
+    updateEnemies(dt);
+    spawnBonus(dt);
+    updateBonuses(dt);
+    updateEnemyChaseAudio();
+    updateHud();
+  }
+
+  function updateEnemyChaseAudio() {
+    if (!state.running || state.paused || state.scaredTimer > 0) {
+      stopLoop("chase");
+      return;
+    }
+    const close = enemies.some(e => e.wait <= 0 && Math.hypot(e.px - player.px, e.py - player.py) < TILE * 5.2);
+    if (close) playLoop("chase");
+    else stopLoop("chase");
+  }
+
+  function updateHud() {
+    hud.score.textContent = state.score;
+    hud.lives.textContent = state.lives;
+    hud.level.textContent = state.level;
+    hud.mode.textContent = state.paused ? "Pause" : state.mode;
+  }
+
+  function drawGrass() {
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#79d841");
+    grad.addColorStop(.48, "#31a740");
+    grad.addColorStop(1, "#14561f");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(255,255,255,.09)";
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 83 + state.level * 17) % W;
+      const y = (i * 137) % H;
+      ctx.fillRect(x, y, 2, 10);
+    }
+    ctx.fillStyle = "rgba(255, 232, 93, .16)";
+    for (let i = 0; i < 24; i++) {
+      const x = (i * 157 + 41) % W;
+      const y = (i * 89 + 24) % H;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawMaze() {
+    ctx.save();
+    ctx.translate(0, TOP);
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const tile = tileAt(x, y);
+        if (tile === TILE_WALL) {
+          const px = x * TILE;
+          const py = y * TILE;
+          roundRect(px + 2, py + 2, TILE - 4, TILE - 4, 8);
+          const wallGrad = ctx.createLinearGradient(px, py, px, py + TILE);
+          wallGrad.addColorStop(0, "#82f055");
+          wallGrad.addColorStop(.48, "#29a936");
+          wallGrad.addColorStop(1, "#126423");
+          ctx.fillStyle = wallGrad;
+          ctx.fill();
+          ctx.strokeStyle = "#dbff62";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = "rgba(6,48,13,.42)";
+          ctx.fillRect(px + 4, py + TILE - 7, TILE - 8, 3);
+          if ((x * 7 + y * 11) % 9 === 0) {
+            ctx.fillStyle = "#ffdb4f";
+            ctx.beginPath();
+            ctx.arc(px + TILE * .36, py + TILE * .36, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          if ((x * 5 + y * 3) % 11 === 0) {
+            ctx.fillStyle = "#ff7ac8";
+            ctx.beginPath();
+            ctx.arc(px + TILE * .65, py + TILE * .62, 2.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else {
+          const px = x * TILE;
+          const py = y * TILE;
+          ctx.fillStyle = tile === TILE_DOOR ? "#f1c45f" : tile === TILE_HOUSE ? "#b98b5b" : "#d8ad73";
+          roundRect(x * TILE + 3, y * TILE + 3, TILE - 6, TILE - 6, 9);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(95, 54, 18, .2)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          if (tile === TILE_PATH || tile === TILE_KIBBLE || tile === TILE_TREAT) {
+            ctx.fillStyle = "rgba(255,255,255,.06)";
+            ctx.beginPath();
+            ctx.arc(px + TILE * .35, py + TILE * .3, 2, 0, Math.PI * 2);
+            ctx.arc(px + TILE * .7, py + TILE * .72, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          if (tile === TILE_DOOR) {
+            ctx.fillStyle = "#2b1809";
+            roundRect(x * TILE + 5, y * TILE + 4, TILE - 10, TILE - 8, 7);
+            ctx.fill();
+            ctx.strokeStyle = "#ffe96d";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x * TILE + 6, y * TILE + 6);
+            ctx.lineTo(x * TILE + TILE - 6, y * TILE + 6);
+            ctx.stroke();
+          }
+        }
+        if (debugMaze) {
+          ctx.fillStyle = tile === TILE_WALL
+            ? "rgba(255,0,0,.22)"
+            : tile === TILE_DOOR
+              ? "rgba(255,255,0,.34)"
+              : isTunnelRow(y)
+                ? "rgba(0,120,255,.24)"
+                : "rgba(0,255,60,.16)";
+          ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+        }
+      }
+    }
+    drawTunnelEntrances();
+    if (state.scaredTimer > 0) {
+      const blink = Math.floor(performance.now() / 110) % 2 === 0;
+      ctx.strokeStyle = blink ? "#fff46b" : "#4ffcff";
+      ctx.lineWidth = 6;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 14;
+      roundRect(4, 4, COLS * TILE - 8, ROWS * TILE - 8, 16);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTunnelEntrances() {
+    const blink = Math.floor(performance.now() / 180) % 2 === 0;
+    TUNNEL_ROWS.forEach(y => {
+      const cy = y * TILE + TILE / 2;
+      ctx.save();
+      ctx.shadowColor = blink ? "#6cff6f" : "#ffd84f";
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = blink ? "#9dff4e" : "#fff06a";
+      ctx.beginPath();
+      ctx.moveTo(8, cy);
+      ctx.lineTo(22, cy - 9);
+      ctx.lineTo(22, cy + 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(COLS * TILE - 8, cy);
+      ctx.lineTo(COLS * TILE - 22, cy - 9);
+      ctx.lineTo(COLS * TILE - 22, cy + 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.75)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, y * TILE + 4, 28, TILE - 8);
+      ctx.strokeRect(COLS * TILE - 28, y * TILE + 4, 28, TILE - 8);
+      ctx.restore();
+    });
+  }
+
+  function drawCollectibles() {
+    ctx.fillStyle = "#d48835";
+    state.pellets.forEach(k => {
+      const p = parseKey(k);
+      ctx.beginPath();
+      ctx.ellipse(tileCenterX(p.x), tileCenterY(p.y), 4, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    state.treats.forEach(k => {
+      const p = parseKey(k);
+      const blink = .65 + Math.sin(performance.now() / 80) * .35;
+      ctx.save();
+      ctx.translate(tileCenterX(p.x), tileCenterY(p.y));
+      ctx.rotate(Math.PI / 4);
+      ctx.shadowColor = "#ffd84f";
+      ctx.shadowBlur = 16 + blink * 24;
+      ctx.globalAlpha = .68 + blink * .32;
+      ctx.fillStyle = "#ffdf5c";
+      roundRect(-9 - blink * 2, -6 - blink, 18 + blink * 4, 12 + blink * 2, 5);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  function drawDog() {
+    const maggie = state.selected === "maggie";
+    ctx.save();
+    ctx.translate(player.px, player.py);
+    const angle = Math.atan2(player.dir.y, player.dir.x);
+    ctx.rotate(angle);
+    ctx.fillStyle = maggie ? "#101010" : "#5b3321";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 12, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = maggie ? "#f7f7f7" : "#9d633a";
+    ctx.beginPath();
+    ctx.ellipse(7, 0, 5, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff8aa0";
+    ctx.beginPath();
+    ctx.arc(12, 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(4, -5, 2.6, 0, Math.PI * 2);
+    ctx.arc(4, 5, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(5, -5, 1.2, 0, Math.PI * 2);
+    ctx.arc(5, 5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = maggie ? "#ff65c8" : "#3d2013";
+    ctx.beginPath();
+    ctx.arc(-4, -10, 5, 0, Math.PI * 2);
+    ctx.arc(-4, 10, 5, 0, Math.PI * 2);
+    ctx.fill();
+    if (maggie) {
+      ctx.fillStyle = "#ff65c8";
+      ctx.beginPath();
+      ctx.moveTo(-3, -13);
+      ctx.lineTo(5, -20);
+      ctx.lineTo(7, -10);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawEnemy(e) {
+    ctx.save();
+    ctx.translate(e.px, e.py);
+    const scaredBlink = state.scaredTimer > 0 && Math.floor(performance.now() / 150) % 2 === 0;
+    ctx.fillStyle = state.scaredTimer > 0 ? (scaredBlink ? "#ffffff" : "#4fc3ff") : e.color;
+    ctx.shadowColor = state.scaredTimer > 0 ? "#75f7ff" : "rgba(0,0,0,.25)";
+    ctx.shadowBlur = state.scaredTimer > 0 ? 12 : 0;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const a = i / 6 * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 8, Math.sin(a) * 8);
+      ctx.lineTo(Math.cos(a) * 15, Math.sin(a) * 15);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(-3, -2, 2.2, 0, Math.PI * 2);
+    ctx.arc(4, -2, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(-2, -2, 1, 0, Math.PI * 2);
+    ctx.arc(5, -2, 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBonus(b) {
+    ctx.save();
+    ctx.translate(b.px, b.py);
+    ctx.fillStyle = b.type === "Rabbit" ? "#f4f4f0" : "#b87333";
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 10, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(7, -4, 6, 0, Math.PI * 2);
+    ctx.fill();
+    if (b.type === "Rabbit") {
+      ctx.fillRect(6, -16, 3, 12);
+      ctx.fillRect(11, -15, 3, 11);
+    } else {
+      ctx.strokeStyle = "#5e3114";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-10, 0, 8, -1.4, 1.2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    drawGrass();
+    drawMaze();
+    drawCollectibles();
+    bonuses.forEach(drawBonus);
+    enemies.forEach(drawEnemy);
+    drawDog();
+    if (state.flashTimer > 0) {
+      ctx.fillStyle = `rgba(255, 244, 75, ${Math.min(.34, state.flashTimer * 1.35)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (state.paused) {
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#ffd84f";
+      ctx.font = "900 54px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("PAUSED", W / 2, H / 2);
+    }
+  }
+
+  function loop(ts) {
+    const dt = Math.min(.08, (ts - state.lastTime) / 1000 || 0);
+    state.lastTime = ts;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  addEventListener("keydown", e => {
+    unlockAudio();
+    if (state.introActive && e.code === "Space") {
+      e.preventDefault();
+      skipIntro();
+      return;
+    }
+    if (e.code === "KeyD" && !e.repeat) {
+      e.preventDefault();
+      debugMaze = !debugMaze;
+    }
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS", "Space"].includes(e.code)) e.preventDefault();
+    if (e.code === "Space" && state.running) state.paused = !state.paused;
+    keys.add(e.code);
+  });
+  addEventListener("keyup", e => keys.delete(e.code));
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  introVideo.addEventListener("ended", finishIntro);
+  introVideo.addEventListener("error", finishIntro);
+  playIntroBtn.addEventListener("click", playIntroWithSound);
+  skipIntroBtn.addEventListener("click", skipIntro);
+  try {
+    introVideo.disablePictureInPicture = true;
+    introVideo.controls = false;
+    introVideo.load();
+  } catch (e) {
+    finishIntro();
+  }
+
+  document.querySelectorAll("[data-dir]").forEach(btn => {
+    const dir = btn.dataset.dir;
+    ["pointerdown", "touchstart"].forEach(type => btn.addEventListener(type, e => {
+      e.preventDefault();
+      unlockAudio();
+      player.next = DIRS[dir];
+      keys.add(dir === "left" ? "ArrowLeft" : dir === "right" ? "ArrowRight" : dir === "up" ? "ArrowUp" : "ArrowDown");
+    }, { passive: false }));
+    ["pointerup", "pointercancel", "touchend", "touchcancel", "pointerleave"].forEach(type => btn.addEventListener(type, e => {
+      e.preventDefault();
+      keys.clear();
+    }, { passive: false }));
+  });
+
+  document.getElementById("chipBtn").addEventListener("click", () => { unlockAudio(); chooseDog("chip"); });
+  document.getElementById("maggieBtn").addEventListener("click", () => { unlockAudio(); chooseDog("maggie"); });
+  document.getElementById("startBtn").addEventListener("click", startGame);
+  document.getElementById("controlsBtn").addEventListener("click", () => { unlockAudio(); showScreen("controls"); });
+  document.getElementById("backBtn").addEventListener("click", () => { unlockAudio(); showScreen("title"); });
+  document.getElementById("againBtn").addEventListener("click", startGame);
+  document.getElementById("menuBtn").addEventListener("click", () => { unlockAudio(); showScreen("title"); });
+  document.getElementById("pauseBtn").addEventListener("click", () => {
+    unlockAudio();
+    if (!state.running) return;
+    state.paused = !state.paused;
+    if (state.paused) stopGameplayLoops();
+    else if (state.scaredTimer > 0) playLoop("powerLoop");
+    updateHud();
+  });
+
+  chooseDog("chip");
+  setupLevel();
+  updateHud();
+  showScreen(null);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
